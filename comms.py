@@ -4,6 +4,8 @@ from time import sleep
 import struct
 import math
 
+import keyboard
+
 ports = sorted([port.name for port in serial.tools.list_ports.comports()])
 print(ports)
 port = None
@@ -42,7 +44,7 @@ try:
         print("current position (radians from start):", angle)
         print("time (ms):", time)
 
-    # code to flip the pendulum
+    # # code to flip the pendulum
     # interval = 0.2
     # while True:
     #     sleep(interval)
@@ -50,16 +52,19 @@ try:
     #     sleep(interval)
     #     ser.write(b"s\xff\x00")
     #     interval *= 1.05
-        # print(interval)
+    #     print(interval)
+   
+
+
 
     def moveRight():
         ser.write(b"s\xff\x01")
-        sleep(0.1)
+        sleep(0.5)
         ser.write(b"s\x00\x00")
 
     def moveLeft():
         ser.write(b"s\xff\x00")
-        sleep(0.1)
+        sleep(0.5)
         ser.write(b"s\x00\x00")
 
     def stop():
@@ -75,6 +80,16 @@ try:
             ser.write(b"p")
             print("current position (radians from start):", angle % (math.pi * 2))
             print("time (ms):", time)
+
+    while True:
+        if keyboard.is_pressed("left arrow"):
+            ser.write(b"s\xff\x00")
+
+        elif keyboard.is_pressed("right arrow"):
+            ser.write(b"s\xff\x01")
+        
+        else:
+            ser.write(b"s\x00\x00")
 
     #moveRight()
 
