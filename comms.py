@@ -54,9 +54,6 @@ try:
     #     interval *= 1.05
     #     print(interval)
    
-
-
-
     def moveRight():
         ser.write(b"s\xff\x01")
         sleep(0.5)
@@ -67,31 +64,33 @@ try:
         sleep(0.5)
         ser.write(b"s\x00\x00")
 
+    def agentMove(command): #USE THIS WITH CAUTION
+        ser.write(command)
+
     def stop():
         ser.write(b"s\x00\x00")
 
     def getAngle():
         ser.write(b"p")
-        sleep(0.1)
+        sleep(0.01)
         if ser.in_waiting:
-            print(f"waiting: {ser.in_waiting}")
+            # print(f"waiting: {ser.in_waiting}")
             angle = struct.unpack("f", ser.read(4))[0]
             time = int.from_bytes(ser.read(4), byteorder="little")
-            ser.write(b"p")
-            print("current position (radians from start):", angle % (math.pi * 2))
-            print("time (ms):", time)
+            # print("current position (radians from start):", angle % (math.pi * 2))
+            # print("time (ms):", time)
+        return angle, time
 
-    while True:
-        if keyboard.is_pressed("left arrow"):
-            ser.write(b"s\xff\x00")
+    if __name__ == "__main__":
+        while True:
+            if keyboard.is_pressed("left arrow"):
+                ser.write(b"s\xff\x00")
 
-        elif keyboard.is_pressed("right arrow"):
-            ser.write(b"s\xff\x01")
-        
-        else:
-            ser.write(b"s\x00\x00")
-
-    #moveRight()
+            elif keyboard.is_pressed("right arrow"):
+                ser.write(b"s\xff\x01") 
+            
+            else:
+                ser.write(b"s\x00\x00")
 
 # DO NOT CHANGE
 
