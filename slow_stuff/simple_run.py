@@ -6,6 +6,8 @@ import math
 import cv2
 import keyboard
 
+
+
 # vid = cv2.VideoCapture(1)
 # ret,img = vid.read()
 # # img = cv2.resize(img,(800,450))
@@ -14,26 +16,26 @@ import keyboard
 
 
 stopped = True
-# BOUNDS = [10,70,70]
-# RED = [4,150,152]
-# BLUE = [106, 120, 157]
-# GREEN = [45,117,150]
-# PURPLE = [150,64,100]
+leftRight = True # right = true
+
 
 def checkBoundary(xavg):
-    if xavg < 18 or xavg> 82:
+    global stopped
+    if xavg < 25 or xavg> 75:
         comms.stop()
         return True
     return False
     
 def reset():
+    global stopped
+    cv2.destroyAllWindows()
     middle = 50
     stopped = True
     cartLoc = t.getPoint(t.red)
     if(cartLoc==-1):
         print("system fail")
         return
-    while(abs(cartLoc[0]-middle)>8):
+    while(abs(cartLoc[0]-middle)>4):
         print(cartLoc[0])
         if cartLoc[0] < middle: 
             comms.moveRight()
@@ -45,7 +47,12 @@ def reset():
 def startstop():
     global stopped
     stopped = not stopped
+    cv2.destroyAllWindows()
     print(stopped)
+
+def toggle():
+    global leftRight
+    leftRight = not leftRight
 
 def rocks(x1, y1, angle, r, frame=-1, reward=-1):
     newcan = tk.Toplevel(cancancan)
@@ -79,14 +86,18 @@ frame.place(x=550,y=300)
 # frame.pack(pady=20)
 startBtn = tk.Button(frame,text="Start/Stop",command=startstop)
 resetBtn = tk.Button(frame,text="Reset",command=reset)
+toggleBtn = tk.Button(frame,text="Toggle Left/Right",command=toggle)
 startBtn.pack(pady=20)
 resetBtn.pack()
+toggleBtn.pack()
 
 # startBtn.bind("<Button-1>",startstop)
 # resetBtn.bind("<Button-1>",reset)
 
 # cancancan.mainloop()
 cancancan.update()
+
+lastTime = time.time()
 
 try:
     #comms.moveRight()
@@ -117,18 +128,16 @@ try:
     while True:
         # stopped = False
         if not stopped:
-            for i in range(3): comms.moveRight()
-            for i in range(2): comms.moveLeft()
-            
-            # if(keyboard.read_key()=="right"):
-            #     comms.moveRight()
-            # elif (keyboard.read_key()=="left"):
-            #     comms.moveLeft()
 
             ret,img = t.vid.read()
             if ret == False: break
-            blur = cv2.GaussianBlur(img, (21,21), cv2.BORDER_DEFAULT)
-            # HSV = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
+
+            if leftRight:
+                for i in range(1): comms.moveRight()
+                # for i in range(2): comms.moveLeft()
+            else:
+                # for i in range(2): comms.moveRight()
+                for i in range(1): comms.moveLeft()
             
             # pastCartX = [50,50,50]
             # cartLoc = t.getPoint(HSV,BOUNDS,RED)
@@ -137,7 +146,9 @@ try:
             # pastCartX[2] = cartLoc
 
             # stopped = checkBoundary(sum(pastCartX)/3)
-            
+            cartLoc = t.getPoint(t.red)
+            stopped = checkBoundary(cartLoc[0])
+
             if ct%20==0:
                 try:
                     trans = t.getTransM(t.blue)
@@ -148,14 +159,13 @@ try:
             except Exception as e:
                 pass
             img = cv2.putText(img,toprint,org,font,fscale,(0,0,0),thickness)
-            print(t.getPoint(t.red))
-            # img = getMask(GREEN)
-            # print(getPoint(BLUE))
-            # img = t.blue.getMask()
-            img = cv2.resize(img,(800,450))
-            cv2.imshow('img',img)
+
+            # img = cv2.resize(img,(800,450))
+            # cv2.imshow('img',img)
             cv2.waitKey(1)
             ct += 1
+            print(f"FPS: {1/(time.time()-lastTime)}")
+            lastTime = time.time()
         # cancancan.update_idletasks()
         cancancan.update()
 
