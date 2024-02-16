@@ -7,8 +7,6 @@ from numpy.linalg import inv
 import time
 
 CALPOINTS = []
-vid = cv2.VideoCapture(0)
-vid.set(cv2.CAP_PROP_EXPOSURE, 10)
 
 # hsv_value = cv2.cvtColor(img[y,x].reshape(1,1,-1), cv2.COLOR_BGR2HSV)[0,0].tolist()
 
@@ -33,7 +31,7 @@ class color(object):
         self.RGB[0] += r
         self.RGB[1] += g
         self.RGB[2] += b
-        delta = 5 if self.name == 'blue' else 25
+        delta = 5 if self.name == 'blue' else 15
         #update bounds
         self.MIN[0] = min(self.MIN[0], r - delta)
         self.MIN[1] = min(self.MIN[1], g - delta)
@@ -59,19 +57,7 @@ class color(object):
         mask = cv2.inRange(mat, lower, upper)
         return mask
 
-def getBlur():
-    ret, img = vid.read()
-
-    img = cv2.resize(img, (800, 450))
-    # prev_t = t
-    # t = time.time()
-    if ret == False:
-        return -1
-    blur = cv2.GaussianBlur(img, (11, 11), cv2.BORDER_DEFAULT)
-    return blur
-
 def getTransM(color):
-    blur = getBlur()
     mask = color.getMask(blur)
     # cv2.imshow('mask',mask)
     points = cv2.HoughCircles(
@@ -115,8 +101,6 @@ def getTransM(color):
 
 def getPoint(color):
     global points
-
-    blur = getBlur()
     mask = color.getMask(blur)
 
     points = cv2.HoughCircles(
@@ -139,7 +123,7 @@ def getPoint(color):
         coords = list(coords.squeeze())
     except:
         # print(color)
-        return [-100, -100]
+        return -1
     return coords
 
 hist = []
@@ -256,6 +240,9 @@ blue = color("blue")
 red = color("red")
 print(blue.name, red.name)
 
+vid = cv2.VideoCapture(0)
+vid.set(cv2.CAP_PROP_EXPOSURE, 10)
+
 font = cv2.FONT_HERSHEY_SIMPLEX
 org = (50, 50)
 fscale = 1
@@ -265,19 +252,17 @@ p1, p2 = np.array((-999, -999)), np.array((-999, -999))
 t = 0
 x_vel = 0
 angle = 0
-# trans = None
-# blur = None
 
-def setup():
-    toprint = ""
-    prev_t = time.time()
-    t = 0
-    xx = 0
-    prev = ((-1, -1), (-1, -1), -1)
-    t = time.time()
+toprint = ""
+prev_t = time.time()
+t = 0
+xx = 0
+prev = ((-1, -1), (-1, -1), -1)
+t = time.time()
 
-    global trans,blur
-    iteration = 0
+iteration = 0
+
+while __name__ == "__main__":
     runSetup()
 
     while True:
@@ -308,7 +293,6 @@ def setup():
         cv2.imshow("img", img)
         cv2.waitKey(1)
         xx += 1
-        if xx == 50: break
 
-    # vid.release()
+    vid.release()
     cv2.destroyAllWindows()
