@@ -11,6 +11,7 @@ t.setup()
 
 COMMS_INFO = [50, 0, True] #xloc, angle
 
+LASTFRAMESKIP = [0]
 
 if DRY_RUN:
     #doest need the physical system
@@ -153,8 +154,18 @@ try:
             cartLoc = COMMS_INFO[1]
         else:
             cartLoc = t.getPoint(t.red)[0]
+            if cartLoc == -100:
+                #didn't detect succesfully
+                LASTFRAMESKIP[0] += 1
+                print("FRAME SKIP", LASTFRAMESKIP)
+                if LASTFRAMESKIP[0] < 3: #we skipped one frame, eh thats fine
+                    return
+            else:
+                LASTFRAMESKIP[0] = 0
+
             #print("cartlochere: ", cartLoc)
         COMMS_INFO[1] = cartLoc
+
         #check if we are out of bounds
         boundaryCheck(cartLoc)
 except:

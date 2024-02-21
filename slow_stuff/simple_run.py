@@ -25,9 +25,37 @@ try:
 
     for eps in range(100):
         print(f"\n running episode {eps}")
-        RL.runEpisode()
-        time.sleep(5)
-    
+        episodePackage = RL.runEpisode()
+        time.sleep(1)
+
+        #render the episode for now for sanity check
+        cancancan = tk.Tk()
+        myCanvas = tk.Canvas(cancancan,bg='white', height=500, width=1000)
+        
+        for state, reward in episodePackage:
+            state = state[0]
+            # print(state, reward)
+            myCanvas.pack()
+            myCanvas.delete('all')
+
+            r = 150
+            angle = state[2]
+            angle += math.pi / 2
+            x1, y1 = 700 - state[0] * 8, 250
+            x2 = x1+r*math.cos(angle)
+            y2  = y1+r*math.sin(angle)
+            #print(x2, y2)
+            pendulum = myCanvas.create_line(x1,y1,x1+r*math.cos(angle),y1+r*math.sin(angle),fill='red')
+            # print(x1, y1, x2, y2, angle)
+            myCanvas.create_text(250,50,fill="darkblue",font="Times 12 italic",text=f"{state}  {reward}")
+            myCanvas.update()
+            time.sleep(0.05)
+        
+        myCanvas.destroy()
+        cancancan.destroy()
+
+        time.sleep(1)
+
     exit()
 
 except KeyboardInterrupt:

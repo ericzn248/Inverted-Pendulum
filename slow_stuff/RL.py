@@ -75,6 +75,15 @@ TIME_INCREMENT = 0.1 #seconds
 
 def testBoundariesAndReset():
     print("beginning to test safety functions", comms.COMMS_INFO)
+
+    theta, timestamp = comms.getAngle()
+    theta %= (2 * math.pi)
+
+    global ZERO_ANGLE
+    ZERO_ANGLE = theta
+
+    print("bottomtheta,", theta)
+
     try:
         for _ in range(10):
             comms.runCV()
@@ -94,7 +103,19 @@ def testBoundariesAndReset():
     
     print("finished testing boundaries and reset")
 
+def _reward_fn(x, v, theta, L):  # pylint: disable=unused-argument
+    # 0 x_pos, 1 v, 2 theta, 3 L
+    # top --> 0, bottom = pi
+    if (theta > math.pi):
+        theta = theta - (2 * math.pi)
+
+    r = (abs(theta) - math.pi)**2
+    #0.01 * L**2
+    #print(state[2], theta)
+    return r
+
 def runEpisode():
+    episodePackage = []
     try:
         comms.resetEpisode()
         buffer.reset()
@@ -111,8 +132,14 @@ def runEpisode():
         episode_active = True
         totalReward = 0
 
+        startTime = time.process_time() + 0.1
+
+        thetaMax, thetaMin = -100, 100
+
         while episode_active: #this is the training loop
-            time.sleep(TIME_INCREMENT)
+            if time.process_time() < startTime + frame * 0.08:
+                continue
+
             #NOTE TO SELF: Can move these some operations for after episode to save tme
             #https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/common/on_policy_algorithm.py
 
@@ -140,7 +167,7 @@ def runEpisode():
 
             theta, timestamp = comms.getAngle()
             theta %= (2 * math.pi)
-            
+
             delta = theta - prevTheta
             #use congruence
             if abs(delta) > math.pi:
@@ -159,12 +186,24 @@ def runEpisode():
 
             new_obs = np.array([[x, v, math.sin(theta), math.cos(theta), L]])
             
-            r_theta = abs(2 * math.pi - theta)
+            if theta > math.pi:
+                r_theta = 2 * math.pi - theta
+            else:
+                r_theta = theta
+
+            if theta > math.pi:
+                thetaMin = min(thetaMin, theta)    
+            else:
+                thetaMax = max(theta, thetaMax)
+            
+
             rewards = r_theta ** 2 # Put reward function here
             if r_theta < 0.8: 
                 r_theta = 0
             totalReward += rewards
             done = False # Put done function here
+
+            episodePackage.append((new_obs, rewards))
 
             buffer.add(last_obs, actions, rewards, last_done, values, log_probs)
 
@@ -194,6 +233,9 @@ def runEpisode():
             values = model.policy.predict_values(obs_as_tensor(new_obs, 'cpu'))  # type: ignore[arg-type]
         buffer.compute_returns_and_advantage(last_values=values, dones=done)
         print("finished computing episode, total reward:", totalReward)
+        print(f"NThetamax {thetaMax}, thetamin {thetaMin}")
+
+        return episodePackage
 
     except KeyboardInterrupt:
         comms.stop()

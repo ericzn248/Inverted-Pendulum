@@ -33,7 +33,7 @@ class color(object):
         self.RGB[0] += r
         self.RGB[1] += g
         self.RGB[2] += b
-        delta = 5 if self.name == 'blue' else 25
+        delta = 10 if self.name == 'blue' else 25
         #update bounds
         self.MIN[0] = min(self.MIN[0], r - delta)
         self.MIN[1] = min(self.MIN[1], g - delta)
